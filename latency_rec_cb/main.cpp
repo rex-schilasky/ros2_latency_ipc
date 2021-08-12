@@ -7,9 +7,10 @@ public:
   LatencyRec()
   : Node("LatencyRec")
   {
+    auto qos = rclcpp::QoS(rclcpp::KeepLast(0)).best_effort().durability_volatile();
     sub_ = this->create_subscription<std_msgs::msg::String>(
       "pkg_send",
-      10,
+      qos,
       [this](std_msgs::msg::String::UniquePtr msg) {
         this->pub_->publish(*msg);
         //RCLCPP_INFO(this->get_logger(), "Received : %i bytes", msg->data.size());
@@ -17,7 +18,7 @@ public:
 
     pub_ = this->create_publisher<std_msgs::msg::String>(
       "pkg_reply",
-      10);
+      qos);
   }
 
 private:
