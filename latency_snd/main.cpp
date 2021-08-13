@@ -2,6 +2,8 @@
 #include "rcutils/cmdline_parser.h"
 #include "std_msgs/msg/string.hpp"
 
+using namespace std::chrono_literals;
+
 class LatencySnd : public rclcpp::Node
 {
 public:
@@ -13,11 +15,10 @@ public:
     log_it_(log_it)
   {
     // log test
-    std::cout << "-----------------------------------------------------------------" << std::endl;
-    std::cout << " RUNS       : " << runs_                                           << std::endl;
-    std::cout << " SEND SIZE  : " << snd_size_ << " kB"                              << std::endl;
-    std::cout << " SEND DELAY : " << delay_    << " ms"                              << std::endl;
-    std::cout << "-----------------------------------------------------------------" << std::endl;
+    std::cout << "----------------------------------------"         << std::endl;
+    std::cout << "Runs                    : " << runs_              << std::endl;
+    std::cout << "Message size            : " << snd_size_ << " kB" << std::endl;
+    std::cout << "Message delay           : " << delay_    << " ms" << std::endl;
 
     // create message string
     msg_ = std_msgs::msg::String();
@@ -30,13 +31,16 @@ public:
     // define qos
     auto qos = rclcpp::QoS(rclcpp::KeepLast(0)).best_effort().durability_volatile();
 
-    // create publisher for topic 'pkg_send'
-    pub_ = create_publisher<std_msgs::msg::String>("pkg_send", qos);
+    // create publisher for topic 'ping'
+    pub_ = create_publisher<std_msgs::msg::String>("ping", qos);
 
-    // create subscriber for topic 'pkg_reply'
-    sub_ = create_subscription<std_msgs::msg::String>("pkg_reply", qos, std::bind(&LatencySnd::OnReceive, this, std::placeholders::_1));
+    // create subscriber for topic 'pong'
+    sub_ = create_subscription<std_msgs::msg::String>("pong", qos, std::bind(&LatencySnd::OnReceive, this, std::placeholders::_1));
 
-    // create and start timer for publishing with 100 ms
+    // make a short sleep to get all matched, maybe an underlying RMW/DDS needs this
+    rclcpp::sleep_for(500ms);
+
+    // finally create and start timer for publishing
     auto timer_delay = std::chrono::milliseconds(delay);
     timer_ = create_wall_timer(timer_delay, std::bind(&LatencySnd::OnPublish, this));
   }
@@ -73,12 +77,11 @@ public:
       {
         long long sum_time = std::accumulate(latency_array_.begin(), latency_array_.end(), 0LL);
         long long avg_time = sum_time / latency_array_.size();
-        std::cout << std::endl;
-        std::cout << "-----------------------------------------------------------------" << std::endl;
-        std::cout << "Messages sent                      : " << snd_pkgs_                << std::endl;
-        std::cout << "Messages received                  : " << latency_array_.size()    << std::endl;
-        std::cout << "Message average latency            : " << avg_time << " us"        << std::endl;
-        std::cout << "-----------------------------------------------------------------" << std::endl;
+        std::cout                                                          << std::endl;
+        std::cout << "Messages sent           : " << snd_pkgs_             << std::endl;
+        std::cout << "Messages received       : " << latency_array_.size() << std::endl;
+        std::cout << "Message average latency : " << avg_time << " us"     << std::endl;
+        std::cout << "----------------------------------------"            << std::endl;
       }
 
       // shutdown here
