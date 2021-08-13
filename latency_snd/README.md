@@ -4,4 +4,4 @@ Send a number of messages (RUNS) with a defined message size (SIZE) to ```latenc
 
 ## Syntax
 
-```latency_snd -r RUNS -s SIZE```
+```latency_snd -r RUNS -d DELAY -s SIZE```
