@@ -1,9 +1,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
 
-
-#include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
+using namespace std::chrono_literals;
 
 class LatencyRec : public rclcpp::Node
 {
@@ -27,21 +25,25 @@ public:
 
   void OnReceive(std_msgs::msg::String::UniquePtr msg)
   {
-    // get send and receive time
-    auto snd_time = *reinterpret_cast<long long*>(&msg->data[0]);
+    // take receive time
     auto rec_time = get_microseconds();
+
+    // read send time
+    auto snd_time = *reinterpret_cast<long long*>(&msg->data[0]);
 
     // final message :-)
     if (snd_time == 42)
     {
-      long long sum_time = std::accumulate(latency_array_.begin(), latency_array_.end(), 0LL);
-      long long avg_time = sum_time / latency_array_.size();
-      std::cout << std::endl;
-      std::cout << "----------------------------------------" << std::endl;
-      std::cout << "Messages received       : " << latency_array_.size()    << std::endl;
-      std::cout << "Message size            : " << rec_size_/1024 << " kB"  << std::endl;
-      std::cout << "Message average latency : " << avg_time << " us"        << std::endl;
-      std::cout << "----------------------------------------" << std::endl;
+      std::cout << "----------------------------------------"                 << std::endl;
+      std::cout << "Messages received       : " << latency_array_.size()      << std::endl;
+      if (!latency_array_.empty())
+      {
+        long long sum_time = std::accumulate(latency_array_.begin(), latency_array_.end(), 0LL);
+        long long avg_time = sum_time / latency_array_.size();
+        std::cout << "Message size            : " << rec_size_/1024 << " kB"  << std::endl;
+        std::cout << "Message average latency : " << avg_time << " us"        << std::endl;
+      }
+      std::cout << "----------------------------------------"                 << std::endl;
 
       // shutdown here
       rclcpp::shutdown();
@@ -49,13 +51,16 @@ public:
     else
     {
       // calculate latency
-      auto rec_latency = rec_time - snd_time;
+      auto latency = rec_time - snd_time;
 
       // store latency for later experiment evaluation
-      latency_array_.push_back(rec_latency);
+      latency_array_.push_back(latency);
+
+      // make a short cool down
+      rclcpp::sleep_for(100ms);
 
       // store new send time into msg
-      *reinterpret_cast<long long*>(&msg->data[0]) = rec_time;
+      *reinterpret_cast<long long*>(&msg->data[0]) = get_microseconds();
 
       // and publish back
       pub_->publish(*msg);
@@ -64,8 +69,8 @@ public:
       rec_size_ = msg->data.size();
 
       // log it
-      if (log_it_) RCLCPP_INFO(get_logger(), "Received : %i bytes", msg->data.size());
-      if (log_it_) RCLCPP_INFO(get_logger(), "Latency  : %i us\n", rec_latency);
+      if (log_it_) RCLCPP_INFO(get_logger(), "Received : %li bytes", msg->data.size());
+      if (log_it_) RCLCPP_INFO(get_logger(), "Latency  : %lli us\n", latency);
     }
   }
 

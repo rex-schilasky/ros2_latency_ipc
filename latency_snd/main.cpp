@@ -47,42 +47,47 @@ public:
 
   void OnPublish()
   {
-    // store publication time
-    last_snd_time_ = get_microseconds();
-    *reinterpret_cast<long long*>(&msg_.data[0]) = last_snd_time_;
-
     // check for termination
     if (snd_pkgs_ < runs_)
     {
+      // store send time
+      *reinterpret_cast<long long*>(&msg_.data[0]) = get_microseconds();
+
       // and publish the message
       pub_->publish(msg_);
       snd_pkgs_++;
 
       // log it
-      if(log_it_) RCLCPP_INFO(get_logger(), "Sent     : %i bytes", msg_.data.size());
+      if(log_it_) RCLCPP_INFO(get_logger(), "Sent     : %li bytes", msg_.data.size());
     }
     else
     {
-      // send final message
-      *reinterpret_cast<long long*>(&msg_.data[0]) = 42;
-      pub_->publish(msg_);
-
       // stop timer
       timer_->cancel();
+
       // destroy subscriber
       sub_ = nullptr;
+
+      // send a bunch of final messages
+      // sometimes we loose ones by BEST_EFFORT :-/
+      *reinterpret_cast<long long*>(&msg_.data[0]) = 42;
+      for(auto frun = 0; frun < 10; ++frun)
+      {
+        pub_->publish(msg_);
+        rclcpp::sleep_for(100ms);
+      }
+
+      std::cout << "Messages sent           : " << snd_pkgs_               << std::endl;
+      std::cout << "Messages received       : " << latency_array_.size()   << std::endl;
 
       // calculate roundtrip time over all received messages
       if (!latency_array_.empty())
       {
         long long sum_time = std::accumulate(latency_array_.begin(), latency_array_.end(), 0LL);
         long long avg_time = sum_time / latency_array_.size();
-        std::cout                                                          << std::endl;
-        std::cout << "Messages sent           : " << snd_pkgs_             << std::endl;
-        std::cout << "Messages received       : " << latency_array_.size() << std::endl;
         std::cout << "Message average latency : " << avg_time << " us"     << std::endl;
-        std::cout << "----------------------------------------"            << std::endl;
       }
+      std::cout << "----------------------------------------"              << std::endl;
 
       // shutdown here
       rclcpp::shutdown();
@@ -92,16 +97,14 @@ public:
   void OnReceive(std_msgs::msg::String::UniquePtr msg)
   {
     // calculate latency
-    auto snd_time    = *reinterpret_cast<long long*>(&msg->data[0]);
-    auto rec_time    = get_microseconds();
-    auto rec_latency = rec_time - snd_time;
+    auto latency = get_microseconds() - *reinterpret_cast<long long*>(&msg->data[0]);
 
-    // store delta time for later experiment evaluation
-    latency_array_.push_back(rec_latency);
+    // store latency for later experiment evaluation
+    latency_array_.push_back(latency);
     
     // log it
-    if (log_it_) RCLCPP_INFO(get_logger(), "Received : %i bytes", msg->data.size());
-    if (log_it_) RCLCPP_INFO(get_logger(), "Latency  : %i us\n", rec_latency);
+    if (log_it_) RCLCPP_INFO(get_logger(), "Received : %li bytes", msg->data.size());
+    if (log_it_) RCLCPP_INFO(get_logger(), "Latency  : %lli us\n", latency);
   }
 
 private:
@@ -117,13 +120,12 @@ private:
   std_msgs::msg::String                                  msg_;
 
   std::vector<long long>                                 latency_array_;
-  long long                                              last_snd_time_ = 0;
   size_t                                                 snd_pkgs_ = 0;
 
-  size_t                                                 runs_ = 0;
+  size_t                                                 runs_     = 0;
   size_t                                                 snd_size_ = 0;
-  size_t                                                 delay_ = 0;
-  bool                                                   log_it_ = false;
+  size_t                                                 delay_    = 0;
+  bool                                                   log_it_   = false;
 };
 
 int main(int argc, char* argv[])
