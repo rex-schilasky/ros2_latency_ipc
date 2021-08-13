@@ -1,8 +1,6 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
 
-using namespace std::chrono_literals;
-
 class LatencyRec : public rclcpp::Node
 {
 public:
@@ -31,7 +29,7 @@ public:
     // read send time
     auto snd_time = *reinterpret_cast<long long*>(&msg->data[0]);
 
-    // final message :-)
+    // final message ? :-)
     if (snd_time == 42)
     {
       std::cout << "----------------------------------------"                 << std::endl;
@@ -55,9 +53,6 @@ public:
 
       // store latency for later experiment evaluation
       latency_array_.push_back(latency);
-
-      // make a short cool down
-      rclcpp::sleep_for(100ms);
 
       // store new send time into msg
       *reinterpret_cast<long long*>(&msg->data[0]) = get_microseconds();

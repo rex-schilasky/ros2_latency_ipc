@@ -8,11 +8,7 @@ class LatencySnd : public rclcpp::Node
 {
 public:
   LatencySnd(int runs, int snd_size, int delay, bool log_it)
-    : Node("LatencySnd"),
-    runs_(runs),
-    snd_size_(snd_size),
-    delay_(delay),
-    log_it_(log_it)
+    : Node("LatencySnd"), runs_(runs), snd_size_(snd_size), delay_(delay), log_it_(log_it)
   {
     // log test
     std::cout << "----------------------------------------"         << std::endl;
