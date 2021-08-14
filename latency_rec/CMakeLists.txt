@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(latency_rec_cb)
+project(latency_rec)
 
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
