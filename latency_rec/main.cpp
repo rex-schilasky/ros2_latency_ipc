@@ -45,11 +45,11 @@ public:
     }
     else
     {
-      // calculate latency and store latency
+      // calculate latency and store it into latency array
       auto latency = rec_time - snd_time;
       latency_array_.push_back(latency);
 
-      // store receive time
+      // store receive size
       rec_size_ = msg->data.size();
 
       // log it
