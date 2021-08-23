@@ -56,8 +56,8 @@ public:
       *reinterpret_cast<long long*>(&msg_.data[0]) = 42;
       pub_->publish(msg_);
 
-      std::cout << "Messages sent           : " << snd_pkgs_  << std::endl;
-      std::cout << "----------------------------------------" << std::endl;
+      std::cout << "Messages sent           : " << snd_pkgs_ - warmups_ << std::endl;
+      std::cout << "----------------------------------------"           << std::endl;
 
       // shutdown here
       rclcpp::shutdown();
