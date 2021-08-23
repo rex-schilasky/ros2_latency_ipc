@@ -28,16 +28,8 @@ public:
     // final message ? :-)
     if (snd_time == 42)
     {
-      std::cout << "----------------------------------------"                << std::endl;
-      std::cout << "Messages received       : " << latency_array_.size()     << std::endl;
-      if (!latency_array_.empty())
-      {
-        long long sum_time = std::accumulate(latency_array_.begin(), latency_array_.end(), 0LL);
-        long long avg_time = sum_time / latency_array_.size();
-        std::cout << "Message size            : " << rec_size_/1024 << " kB" << std::endl;
-        std::cout << "Message average latency : " << avg_time << " us"       << std::endl;
-      }
-      std::cout << "----------------------------------------"                << std::endl;
+      // do evaluation
+      evaluate(latency_array_, rec_size_, warmups_);
 
       // reset latency array and receive size
       latency_array_.clear();
@@ -65,8 +57,42 @@ private:
     return(std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count());
   }
 
+  void evaluate(std::vector<long long>& lat_arr, size_t rec_size, size_t warmups)
+  {
+    // remove warmup runs
+    if (lat_arr.size() >= warmups)
+    {
+      lat_arr.erase(lat_arr.begin(), lat_arr.begin() + warmups);
+    }
+
+    // evaluate all
+    size_t sum_msg = lat_arr.size();
+    std::cout << "--------------------------------------------" << std::endl;
+    std::cout << "Messages received             : " << sum_msg  << std::endl;
+    if (sum_msg > warmups)
+    {
+      long long sum_time = std::accumulate(lat_arr.begin(), lat_arr.end(), 0LL);
+      long long avg_time = sum_time / sum_msg;
+      auto      min_it = std::min_element(lat_arr.begin(), lat_arr.end());
+      auto      max_it = std::max_element(lat_arr.begin(), lat_arr.end());
+      size_t    min_pos = min_it - lat_arr.begin();
+      size_t    max_pos = max_it - lat_arr.begin();
+      long long min_time = *min_it;
+      long long max_time = *max_it;
+      std::cout << "Message size received         : " << rec_size / 1024 << " kB"        << std::endl;
+      std::cout << "Message average latency       : " << avg_time << " us"               << std::endl;
+      std::cout << "Message min latency           : " << min_time << " us @ " << min_pos << std::endl;
+      std::cout << "Message max latency           : " << max_time << " us @ " << max_pos << std::endl;
+      std::cout << "Throughput                    : " << static_cast<int>(((rec_size * sum_msg) / 1024.0) / (sum_time / 1000.0 / 1000.0))          << " kB/s"  << std::endl;
+      std::cout << "                              : " << static_cast<int>(((rec_size * sum_msg) / 1024.0 / 1024.0) / (sum_time / 1000.0 / 1000.0)) << " MB/s"  << std::endl;
+      std::cout << "                              : " << static_cast<int>(sum_msg / (sum_time / 1000.0 / 1000.0))                                  << " Msg/s" << std::endl;
+    }
+    std::cout << "--------------------------------------------" << std::endl;
+  }
+
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr sub_;
   std::vector<long long>                                 latency_array_;
+  const size_t                                           warmups_  = 10;
   size_t                                                 rec_size_ = 0;
   bool                                                   log_it_   = false;
 };

@@ -35,7 +35,7 @@ public:
   void OnPublish()
   {
     // check for termination
-    if (snd_pkgs_ < runs_)
+    if (snd_pkgs_ < runs_ + warmups_)
     {
       // store send time into string (bad style for sure)
       *reinterpret_cast<long long*>(&msg_.data[0]) = get_microseconds();
@@ -76,6 +76,7 @@ private:
   std_msgs::msg::String                               msg_;
   size_t                                              snd_pkgs_ = 0;
   size_t                                              runs_     = 0;
+  const size_t                                        warmups_  = 10;
   size_t                                              snd_size_ = 0;
   size_t                                              delay_    = 0;
   bool                                                log_it_   = false;
@@ -89,7 +90,7 @@ int main(int argc, char* argv[])
     char* cli_option = rcutils_cli_get_option(argv, argv + argc, "-r");
     if (cli_option) runs = std::atoi(cli_option);
   }
-  int snd_size(1); // message size in kB
+  int snd_size(64); // message size in kB
   {
     char* cli_option = rcutils_cli_get_option(argv, argv + argc, "-s");
     if (cli_option) snd_size = std::atoi(cli_option);
