@@ -2,13 +2,15 @@
 
 ## Specification
 
+The same physical machine (dual boot windows 10, ubuntu focal) is used for these tests.
+
 ### Windows 10
 
 ```
-Microsoft Windows 10 Enterprise
+Microsoft Windows 10 Pro
 Version	10.0.19042 Build 19042
-HP ZBook 14u G6
-Intel(R) Core(TM) i7-8665U CPU @ 1.90GHz, 2112 MHz, 4 Kern(e), 8 logische(r) Prozessor(en)
+HP ZBook 15 G5
+Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz, 2592 MHz, 6 Kern(e), 12 logische(r) Prozessor(en)
 32.0 GB
 ```
 
