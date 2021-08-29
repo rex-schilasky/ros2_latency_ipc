@@ -1,5 +1,3 @@
-#pragma once
-
 #include "latency_log.h"
 
 #include <algorithm>
