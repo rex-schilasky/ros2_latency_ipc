@@ -76,6 +76,7 @@ private:
 int main(int argc, char* argv[])
 {
   rclcpp::init(argc, argv);
+
   int runs(100); // number of publications
   {
     char* cli_option = rcutils_cli_get_option(argv, argv + argc, "-r");
@@ -91,7 +92,9 @@ int main(int argc, char* argv[])
     char* cli_option = rcutils_cli_get_option(argv, argv + argc, "-d");
     if (cli_option) delay = std::atoi(cli_option);
   }
+
   rclcpp::spin(std::make_shared<LatencySnd>(runs, snd_size, delay));
   rclcpp::shutdown();
+
   return 0;
 }

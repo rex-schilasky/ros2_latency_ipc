@@ -64,6 +64,7 @@ private:
 int main(int argc, char* argv[])
 {
   rclcpp::init(argc, argv);
+
   int delay(100); // callback process delay in ms
   {
     char* cli_option = rcutils_cli_get_option(argv, argv + argc, "-d");
@@ -74,8 +75,9 @@ int main(int argc, char* argv[])
     char* cli_option = rcutils_cli_get_option(argv, argv + argc, "-l");
     if (cli_option) log_file = cli_option;
   }
-  rclcpp::init(argc, argv);
+
   rclcpp::spin(std::make_shared<LatencyRec>(delay, log_file));
   rclcpp::shutdown();
+
   return 0;
 }
