@@ -4,7 +4,7 @@
   <name>latency_snd</name>
   <version>0.10.0</version>
   <description>Latency sender</description>
-  <maintainer email="schilasky@github.com">Rex Schilasky</maintainer>
+  <maintainer email="rex-schilasky@github.com">Rex Schilasky</maintainer>
   <license>Apache License 2.0</license>
   <author>Rex Schilasky</author>
   <author email="schilasky@github.com">Rex Schilasky</author>

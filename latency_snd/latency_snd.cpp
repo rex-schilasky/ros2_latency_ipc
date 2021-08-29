@@ -1,14 +1,14 @@
-#include "rclcpp/rclcpp.hpp"
-#include "rcutils/cmdline_parser.h"
-#include "std_msgs/msg/string.hpp"
+#include <rclcpp/rclcpp.hpp>
+#include <rcutils/cmdline_parser.h>
+#include <std_msgs/msg/string.hpp>
 
 using namespace std::chrono_literals;
 
 class LatencySnd : public rclcpp::Node
 {
 public:
-  LatencySnd(int runs, int snd_size, int delay, bool log_it)
-    : Node("LatencySnd"), runs_(runs), snd_size_(snd_size), delay_(delay), log_it_(log_it)
+  LatencySnd(int runs, int snd_size, int delay)
+    : Node("LatencySnd"), runs_(runs), snd_size_(snd_size), delay_(delay)
   {
     // log test
     std::cout << "----------------------------------------"         << std::endl;
@@ -38,14 +38,12 @@ public:
     if (snd_pkgs_ < runs_ + warmups_)
     {
       // store send time into string (bad style for sure)
-      *reinterpret_cast<long long*>(&msg_.data[0]) = get_microseconds();
+      long long snd_time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+      *reinterpret_cast<long long*>(&msg_.data[0]) = snd_time;
 
       // and publish the message
       pub_->publish(msg_);
       snd_pkgs_++;
-
-      // log it
-      if(log_it_) RCLCPP_INFO(get_logger(), "Sent     : %li bytes", msg_.data.size());
     }
     else
     {
@@ -65,12 +63,6 @@ public:
   }
 
 private:
-  long long get_microseconds()
-  {
-    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-    return(std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count());
-  }
-
   rclcpp::TimerBase::SharedPtr                        timer_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_;
   std_msgs::msg::String                               msg_;
@@ -79,7 +71,6 @@ private:
   const size_t                                        warmups_  = 10;
   size_t                                              snd_size_ = 0;
   size_t                                              delay_    = 0;
-  bool                                                log_it_   = false;
 };
 
 int main(int argc, char* argv[])
@@ -100,7 +91,7 @@ int main(int argc, char* argv[])
     char* cli_option = rcutils_cli_get_option(argv, argv + argc, "-d");
     if (cli_option) delay = std::atoi(cli_option);
   }
-  rclcpp::spin(std::make_shared<LatencySnd>(runs, snd_size, delay, false));
+  rclcpp::spin(std::make_shared<LatencySnd>(runs, snd_size, delay));
   rclcpp::shutdown();
   return 0;
 }
